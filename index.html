@@ -168,30 +168,57 @@
 
     // Explicit parser tailored directly to your template file structure
     function parseCSV(text) {
-        const lines = text.split(/\r?\n/);
-        // Ensure there are enough lines to pass the first 3 lines (headers + meta)
-        if (lines.length < 4) return [];
+    // Split by lines and filter out completely empty entries
+    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+    if (lines.length < 2) return [];
 
-        const standings = [];
+    const standings = [];
+    let nameIndex = -1;
+    let pointsIndex = -1;
+
+    // Row 1 and 2 are cosmetic titles. We look at Row 3 (index 2) to find our headers.
+    // This helper splits the line by commas while safely ignoring commas inside quotes
+    const splitCSVLine = (line) => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+
+    const headers = splitCSVLine(lines[2]);
+
+    // Loop through headers to find exactly where "Name" and "Total Points" live
+    for (let i = 0; i < headers.length; i++) {
+        const cleanHeader = headers[i].replace(/"/g, '').trim().toLowerCase();
+        if (cleanHeader === 'name') {
+            nameIndex = i;
+        }
+        if (cleanHeader === 'total points') {
+            pointsIndex = i;
+        }
+    }
+
+    // EMERGENCY FALLBACK: If row 3 text didn't match perfectly, use absolute column positions
+    if (nameIndex === -1) nameIndex = 14;   // Column O
+    if (pointsIndex === -1) pointsIndex = 28; // Column AC
+
+    // Process all rows starting directly after the header row (index 3 onwards)
+    for (let i = 3; i < lines.length; i++) {
+        const columns = splitCSVLine(lines[i]);
         
-        // As specified, line index 0 and 1 are ignored. 
-        // Line index 2 (the 3rd row) is our functional layout header row.
-        const headers = lines[2].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-        
-        let nameIndex = 14;   // Fallback position for Column O
-        let pointsIndex = 28; // Fallback position for Column AC
+        if (columns.length > Math.max(nameIndex, pointsIndex)) {
+            const name = columns[nameIndex]?.replace(/"/g, '').trim();
+            const pointsRaw = columns[pointsIndex]?.replace(/"/g, '').trim();
 
-        // Pinpoint positions precisely dynamically based on row 3 text content
-        headers.forEach((header, index) => {
-            const cleanHeader = header.replace(/"/g, '').trim().toLowerCase();
-            if (cleanHeader === 'name' || cleanHeader === 'participant') {
-                nameIndex = index;
+            // Guard against empty spacer rows, bottom template calculations, or strings
+            if (name && name !== 'Name' && name !== 'NaN' && name !== '') {
+                const points = parseFloat(pointsRaw);
+                
+                // If it is a valid numeric score, save it!
+                if (!isNaN(points)) {
+                    standings.push({ name: name, points: points });
+                }
             }
-            if (cleanHeader === 'total points' || cleanHeader === 'points' || cleanHeader === 'total') {
-                pointsIndex = index;
-            }
-        });
-
+        }
+    }
+    
+    return standings;
+}
         // Loop data entries beginning directly on line index 3 (the 4th row)
         for (let i = 3; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
