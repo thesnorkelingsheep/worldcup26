@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Muirhead ISA Tracker</title>
+    <title>Live World Cup 2026 Standings</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -75,7 +75,7 @@
 
 <div class="container">
     <header>
-        <h1 id="page-title">🏆 The Muirhead ISA Tracker</h1>
+        <h1 id="page-title">🏆 World Cup 2026 Standings</h1>
         <button class="btn" id="toggle-view-btn" onclick="toggleView()">Switch to Admin View</button>
     </header>
 
@@ -105,8 +105,7 @@
 </div>
 
 <script>
-    // ⚙️ CONFIGURATION: Replace these values with your unique Supabase Project Credentials!
-
+    // ⚙️ CONFIGURATION: Replace with your unique Supabase Credentials!
     const SUPABASE_URL = 'https://qdwbjrjsldufcvrndois.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_3snZWMy3jV-Hnm6BtOMmSA_sfGjFqpL';
 
@@ -166,73 +165,50 @@
         reader.readAsText(file);
     }
 
-    // Explicit parser tailored directly to your template file structure
+    // Explicit parser tailored directly to detect your header text dynamically
     function parseCSV(text) {
-    // Split by lines and filter out completely empty entries
-    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
-    if (lines.length < 2) return [];
+        // Split by lines and filter out completely empty trailing lines
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+        if (lines.length < 2) return [];
 
-    const standings = [];
-    let nameIndex = -1;
-    let pointsIndex = -1;
+        const standings = [];
+        let nameIndex = -1;
+        let pointsIndex = -1;
 
-    // Row 1 and 2 are cosmetic titles. We look at Row 3 (index 2) to find our headers.
-    // This helper splits the line by commas while safely ignoring commas inside quotes
-    const splitCSVLine = (line) => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        // Helper regex splits lines by commas while safely ignoring commas locked inside quotation blocks
+        const splitCSVLine = (line) => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
 
-    const headers = splitCSVLine(lines[2]);
+        // Row 1 and 2 are cosmetic titles. We check Row 3 (index 2) to establish layout headers
+        const headers = splitCSVLine(lines[2]);
 
-    // Loop through headers to find exactly where "Name" and "Total Points" live
-    for (let i = 0; i < headers.length; i++) {
-        const cleanHeader = headers[i].replace(/"/g, '').trim().toLowerCase();
-        if (cleanHeader === 'name') {
-            nameIndex = i;
-        }
-        if (cleanHeader === 'total points') {
-            pointsIndex = i;
-        }
-    }
-
-    // EMERGENCY FALLBACK: If row 3 text didn't match perfectly, use absolute column positions
-    if (nameIndex === -1) nameIndex = 14;   // Column O
-    if (pointsIndex === -1) pointsIndex = 28; // Column AC
-
-    // Process all rows starting directly after the header row (index 3 onwards)
-    for (let i = 3; i < lines.length; i++) {
-        const columns = splitCSVLine(lines[i]);
-        
-        if (columns.length > Math.max(nameIndex, pointsIndex)) {
-            const name = columns[nameIndex]?.replace(/"/g, '').trim();
-            const pointsRaw = columns[pointsIndex]?.replace(/"/g, '').trim();
-
-            // Guard against empty spacer rows, bottom template calculations, or strings
-            if (name && name !== 'Name' && name !== 'NaN' && name !== '') {
-                const points = parseFloat(pointsRaw);
-                
-                // If it is a valid numeric score, save it!
-                if (!isNaN(points)) {
-                    standings.push({ name: name, points: points });
-                }
+        // Dynamically find where "Name" and "Total Points" live
+        for (let i = 0; i < headers.length; i++) {
+            const cleanHeader = headers[i].replace(/"/g, '').trim().toLowerCase();
+            if (cleanHeader === 'name') {
+                nameIndex = i;
+            }
+            if (cleanHeader === 'total points') {
+                pointsIndex = i;
             }
         }
-    }
-    
-    return standings;
-}
-        // Loop data entries beginning directly on line index 3 (the 4th row)
-        for (let i = 3; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
 
-            const columns = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        // Emergency fallback indices if matching fails text comparison
+        if (nameIndex === -1) nameIndex = 14;   // Column O
+        if (pointsIndex === -1) pointsIndex = 28; // Column AC
+
+        // Process data entries starting directly on line index 3 (Row 4)
+        for (let i = 3; i < lines.length; i++) {
+            const columns = splitCSVLine(lines[i]);
             
             if (columns.length > Math.max(nameIndex, pointsIndex)) {
                 const name = columns[nameIndex]?.replace(/"/g, '').trim();
                 const pointsRaw = columns[pointsIndex]?.replace(/"/g, '').trim();
 
-                // Validation to pass real participant rows and dodge bottom template strings or summary headers
+                // Validation parameters to drop empty spaces or sheet summary formula texts
                 if (name && name !== 'Name' && name !== 'NaN' && name !== '') {
                     const points = parseFloat(pointsRaw);
-                    // Ensure the points field evaluates cleanly to a number type
+                    
+                    // Validate that the score resolves perfectly into a numeric datatype
                     if (!isNaN(points)) {
                         standings.push({ name: name, points: points });
                     }
