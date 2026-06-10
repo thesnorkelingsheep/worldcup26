@@ -501,17 +501,28 @@ async function fetchAndRenderTable(){
 
         data.forEach((item,index)=>{
 
-            const row =
-            document.createElement('tr');
-
-            row.innerHTML = `
-                <td class="rank">${index+1}</td>
-                <td>${escapeHTML(item.name)}</td>
-                <td class="points">${item.points}</td>
-            `;
-
-            body.appendChild(row);
-        });
+        let position;
+    
+        if (
+            index > 0 &&
+            item.points === data[index - 1].points
+        ) {
+            position = '-';
+        } else {
+            position = index + 1;
+        }
+    
+        const row =
+        document.createElement('tr');
+    
+        row.innerHTML = `
+            <td class="rank">${position}</td>
+            <td>${escapeHTML(item.name)}</td>
+            <td class="points">${item.points}</td>
+        `;
+    
+        body.appendChild(row);
+    });
     }
 
     document.getElementById('loading')
