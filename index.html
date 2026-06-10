@@ -1,272 +1,529 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live World Cup 2026 Standings</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --primary: #10b981;
-            --primary-hover: #059669;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --text: #334155;
-            --border: #e2e8f0;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--light);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 20px;
-            margin-bottom: 25px;
-        }
-        h1 { margin: 0; color: var(--dark); font-size: 24px; }
-        .btn {
-            background-color: var(--dark);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .btn:hover { background-color: #0f172a; }
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-        th { background-color: #f1f5f9; color: var(--dark); }
-        .rank { font-weight: bold; color: #64748b; width: 50px; }
-        .points { font-weight: bold; color: var(--primary); text-align: right; width: 80px; }
-        th.points-head { text-align: right; }
-        #drop-zone {
-            border: 3px dashed #cbd5e1;
-            border-radius: 8px;
-            padding: 60px 20px;
-            text-align: center;
-            background: #f8fafc;
-            cursor: pointer;
-        }
-        #drop-zone.dragover { background: #ecfdf5; border-color: var(--primary); }
-        .status-msg { margin-top: 15px; padding: 12px; border-radius: 6px; display: none; font-weight: 500; }
-        .status-success { display: block; background-color: #d1fae5; color: #065f46; }
-        .status-error { display: block; background-color: #fee2e2; color: #991b1b; }
-        .loading { text-align: center; color: #64748b; padding: 20px; font-style: italic; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muirhead ISA Tracker</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+:root{
+    --primary:#10b981;
+    --primary-hover:#059669;
+    --dark:#1e293b;
+    --light:#f8fafc;
+    --text:#334155;
+    --border:#e2e8f0;
+}
+
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background-color:var(--light);
+    color:var(--text);
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:800px;
+    margin:0 auto;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:2px solid var(--border);
+    padding-bottom:20px;
+    margin-bottom:25px;
+}
+
+h1{
+    margin:0;
+    color:var(--dark);
+    font-size:24px;
+}
+
+.btn{
+    background-color:var(--dark);
+    color:white;
+    border:none;
+    padding:10px 16px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.btn:hover{
+    background-color:#0f172a;
+}
+
+.view-section{
+    display:none;
+}
+
+.view-section.active{
+    display:block;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    text-align:left;
+}
+
+th,td{
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+}
+
+th{
+    background-color:#f1f5f9;
+    color:var(--dark);
+}
+
+.rank{
+    font-weight:bold;
+    color:#64748b;
+    width:50px;
+}
+
+.points{
+    font-weight:bold;
+    color:var(--primary);
+    text-align:right;
+    width:80px;
+}
+
+th.points-head{
+    text-align:right;
+}
+
+#drop-zone{
+    border:3px dashed #cbd5e1;
+    border-radius:8px;
+    padding:60px 20px;
+    text-align:center;
+    background:#f8fafc;
+    cursor:pointer;
+}
+
+#drop-zone.dragover{
+    background:#ecfdf5;
+    border-color:var(--primary);
+}
+
+.status-msg{
+    margin-top:15px;
+    padding:12px;
+    border-radius:6px;
+    display:none;
+    font-weight:500;
+}
+
+.status-success{
+    display:block;
+    background-color:#d1fae5;
+    color:#065f46;
+}
+
+.status-error{
+    display:block;
+    background-color:#fee2e2;
+    color:#991b1b;
+}
+
+.loading{
+    text-align:center;
+    color:#64748b;
+    padding:20px;
+    font-style:italic;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <header>
-        <h1 id="page-title">🏆 World Cup 2026 Standings</h1>
-        <button class="btn" id="toggle-view-btn" onclick="toggleView()">Switch to Admin View</button>
-    </header>
 
-    <div id="leaderboard-view" class="view-section active">
-        <div id="loading" class="loading">Fetching latest live standings...</div>
-        <table id="league-table" style="display: none;">
-            <thead>
-                <tr>
-                    <th class="rank">Pos</th>
-                    <th>Name / Participant</th>
-                    <th class="points-head">Total Points</th>
-                </tr>
-            </thead>
-            <tbody id="league-body"></tbody>
-        </table>
-    </div>
+<header>
+<h1 id="page-title">🏆 Muirhead ISA Tracker</h1>
 
-    <div id="admin-view" class="view-section">
-        <p style="margin-top:0; color:#64748b;">Dropping your CSV here will instantly wipe old scores and update the leaderboard for everyone worldwide.</p>
-        <div id="drop-zone" ondragover="dragOverHandler(event)" ondragleave="dragLeaveHandler(event)" ondrop="dropHandler(event)" onclick="document.getElementById('file-input').click()">
-            <p>Drag & Drop your CSV file here</p>
-            <span>or click to browse your computer</span>
-            <input type="file" id="file-input" accept=".csv" style="display:none" onchange="fileSelectHandler(event)">
-        </div>
-        <div id="status" class="status-msg"></div>
-    </div>
+<button
+class="btn"
+id="toggle-view-btn"
+onclick="toggleView()">
+Switch to Admin View
+</button>
+</header>
+
+<div id="leaderboard-view" class="view-section active">
+
+<div id="loading" class="loading">
+Fetching latest live standings...
+</div>
+
+<table id="league-table" style="display:none;">
+<thead>
+<tr>
+<th class="rank">Pos</th>
+<th>Name / Participant</th>
+<th class="points-head">Total Points</th>
+</tr>
+</thead>
+
+<tbody id="league-body"></tbody>
+
+</table>
+</div>
+
+<div id="admin-view" class="view-section">
+
+<p style="margin-top:0;color:#64748b;">
+Drop your XLSX spreadsheet here and the leaderboard will update instantly.
+</p>
+
+<div
+id="drop-zone"
+ondragover="dragOverHandler(event)"
+ondragleave="dragLeaveHandler(event)"
+ondrop="dropHandler(event)"
+onclick="document.getElementById('file-input').click()">
+
+<p>Drag & Drop Excel File Here</p>
+
+<span>or click to browse</span>
+
+<input
+type="file"
+id="file-input"
+accept=".xlsx,.xls,.csv"
+style="display:none"
+onchange="fileSelectHandler(event)">
+</div>
+
+<div id="status" class="status-msg"></div>
+
+</div>
 </div>
 
 <script>
-    // ⚙️ CONFIGURATION: Replace with your unique Supabase Credentials!
-    const SUPABASE_URL = 'https://qdwbjrjsldufcvrndois.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'sb_publishable_3snZWMy3jV-Hnm6BtOMmSA_sfGjFqpL';
 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// SUPABASE CONFIG
 
-    let currentView = 'leaderboard';
+const SUPABASE_URL =
+'https://qdwbjrjsldufcvrndois.supabase.co';
 
-    function toggleView() {
-        const leaderboard = document.getElementById('leaderboard-view');
-        const admin = document.getElementById('admin-view');
-        const btn = document.getElementById('toggle-view-btn');
-        const title = document.getElementById('page-title');
+const SUPABASE_ANON_KEY =
+'sb_publishable_3snZWMy3jV-Hnm6BtOMmSA_sfGjFqpL';
 
-        if (currentView === 'leaderboard') {
-            leaderboard.classList.remove('active');
-            admin.classList.add('active');
-            btn.innerText = 'Back to Leaderboard';
-            title.innerText = '⚙️ Admin Panel';
-            currentView = 'admin';
-        } else {
-            admin.classList.remove('active');
-            leaderboard.classList.add('active');
-            btn.innerText = 'Switch to Admin View';
-            title.innerText = '🏆 World Cup 2026 Standings';
-            currentView = 'leaderboard';
-            fetchAndRenderTable();
-        }
+const supabaseClient =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+
+let currentView = 'leaderboard';
+
+function toggleView(){
+
+    const leaderboard =
+    document.getElementById('leaderboard-view');
+
+    const admin =
+    document.getElementById('admin-view');
+
+    const btn =
+    document.getElementById('toggle-view-btn');
+
+    const title =
+    document.getElementById('page-title');
+
+    if(currentView === 'leaderboard'){
+
+        leaderboard.classList.remove('active');
+        admin.classList.add('active');
+
+        btn.innerText =
+        'Back to Leaderboard';
+
+        title.innerText =
+        '⚙️ Admin Panel';
+
+        currentView = 'admin';
+
+    }else{
+
+        admin.classList.remove('active');
+        leaderboard.classList.add('active');
+
+        btn.innerText =
+        'Switch to Admin View';
+
+        title.innerText =
+        '🏆 World Cup 2026 Standings';
+
+        currentView = 'leaderboard';
+
+        fetchAndRenderTable();
     }
+}
 
-    function dragOverHandler(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover'); }
-    function dragLeaveHandler(e) { e.preventDefault(); document.getElementById('drop-zone').classList.remove('dragover'); }
-    function dropHandler(e) { e.preventDefault(); document.getElementById('drop-zone').classList.remove('dragover'); if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]); }
-    function fileSelectHandler(e) { if (e.target.files.length > 0) processFile(e.target.files[0]); }
+function dragOverHandler(e){
+    e.preventDefault();
+    document.getElementById('drop-zone')
+    .classList.add('dragover');
+}
 
-    function processFile(file) {
-        const reader = new FileReader();
-        showStatus("Processing CSV file and connecting to database...", "success");
-        
-        reader.onload = async function(e) {
-            try {
-                const parsedData = parseCSV(e.target.result);
-                if(parsedData.length === 0) throw new Error("No valid records found in columns O and AC.");
+function dragLeaveHandler(e){
+    e.preventDefault();
+    document.getElementById('drop-zone')
+    .classList.remove('dragover');
+}
 
-                // 1. Delete all current table contents securely
-                const { error: deleteError } = await supabaseClient.from('standings').delete().neq('id', 0);
-                if(deleteError) throw deleteError;
+function dropHandler(e){
+    e.preventDefault();
 
-                // 2. Upload the new records
-                const { error: insertError } = await supabaseClient.from('standings').insert(parsedData);
-                if(insertError) throw insertError;
+    document.getElementById('drop-zone')
+    .classList.remove('dragover');
 
-                showStatus(`Success! Online Leaderboard updated for everyone with ${parsedData.length} entries.`, 'success');
-            } catch (err) {
-                showStatus(`Database Error: ${err.message}`, 'error');
-            }
-        };
-        reader.readAsText(file);
+    if(e.dataTransfer.files.length > 0){
+        processFile(e.dataTransfer.files[0]);
     }
+}
 
-    // Explicit parser tailored directly to detect your header text dynamically
-    function parseCSV(text) {
-        // Split by lines and filter out completely empty trailing lines
-        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
-        if (lines.length < 2) return [];
+function fileSelectHandler(e){
 
-        const standings = [];
-        let nameIndex = -1;
-        let pointsIndex = -1;
+    if(e.target.files.length > 0){
+        processFile(e.target.files[0]);
+    }
+}
 
-        // Helper regex splits lines by commas while safely ignoring commas locked inside quotation blocks
-        const splitCSVLine = (line) => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+async function processFile(file){
 
-        // Row 1 and 2 are cosmetic titles. We check Row 3 (index 2) to establish layout headers
-        const headers = splitCSVLine(lines[2]);
+    showStatus(
+    'Reading spreadsheet...',
+    'success'
+    );
 
-        // Dynamically find where "Name" and "Total Points" live
-        for (let i = 0; i < headers.length; i++) {
-            const cleanHeader = headers[i].replace(/"/g, '').trim().toLowerCase();
-            if (cleanHeader === 'name') {
-                nameIndex = i;
+    const reader = new FileReader();
+
+    reader.onload = async function(e){
+
+        try{
+
+            const workbook =
+            XLSX.read(
+                e.target.result,
+                { type:'array' }
+            );
+
+            const sheet =
+            workbook.Sheets['Official chart']
+            || workbook.Sheets[workbook.SheetNames[0]];
+
+            if(!sheet){
+                throw new Error(
+                'Worksheet not found.'
+                );
             }
-            if (cleanHeader === 'total points') {
-                pointsIndex = i;
-            }
-        }
 
-        // Emergency fallback indices if matching fails text comparison
-        if (nameIndex === -1) nameIndex = 14;   // Column O
-        if (pointsIndex === -1) pointsIndex = 28; // Column AC
-
-        // Process data entries starting directly on line index 3 (Row 4)
-        for (let i = 3; i < lines.length; i++) {
-            const columns = splitCSVLine(lines[i]);
-            
-            if (columns.length > Math.max(nameIndex, pointsIndex)) {
-                const name = columns[nameIndex]?.replace(/"/g, '').trim();
-                const pointsRaw = columns[pointsIndex]?.replace(/"/g, '').trim();
-
-                // Validation parameters to drop empty spaces or sheet summary formula texts
-                if (name && name !== 'Name' && name !== 'NaN' && name !== '') {
-                    const points = parseFloat(pointsRaw);
-                    
-                    // Validate that the score resolves perfectly into a numeric datatype
-                    if (!isNaN(points)) {
-                        standings.push({ name: name, points: points });
-                    }
+            const rows =
+            XLSX.utils.sheet_to_json(
+                sheet,
+                {
+                    header:1,
+                    defval:''
                 }
+            );
+
+            const parsedData =
+            parseExcelRows(rows);
+
+            if(parsedData.length === 0){
+                throw new Error(
+                'No valid records found.'
+                );
             }
-        }
-        return standings;
-    }
 
-    function showStatus(msg, type) {
-        const statusDiv = document.getElementById('status');
-        statusDiv.innerText = msg;
-        statusDiv.className = `status-msg status-${type}`;
-    }
+            showStatus(
+            `Found ${parsedData.length} records. Uploading...`,
+            'success'
+            );
 
-    // Fetch values from Supabase and order them High -> Low
-    async function fetchAndRenderTable() {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('league-table').style.display = 'none';
-
-        const { data, error } = await supabaseClient
+            const { error: deleteError } =
+            await supabaseClient
             .from('standings')
-            .select('*')
-            .order('points', { ascending: false });
+            .delete()
+            .neq('id',0);
 
-        if (error) {
-            document.getElementById('loading').innerText = 'Error syncing live leaderboard.';
-            console.error(error);
-            return;
+            if(deleteError)
+                throw deleteError;
+
+            const { error: insertError } =
+            await supabaseClient
+            .from('standings')
+            .insert(parsedData);
+
+            if(insertError)
+                throw insertError;
+
+            showStatus(
+            `Success! ${parsedData.length} standings uploaded.`,
+            'success'
+            );
+
+            fetchAndRenderTable();
+
         }
+        catch(err){
 
-        const body = document.getElementById('league-body');
-        body.innerHTML = '';
+            console.error(err);
 
-        if (!data || data.length === 0) {
-            body.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#64748b;">No standings found in the database. Go to admin view to drop a file!</td></tr>`;
-        } else {
-            data.forEach((item, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="rank">${index + 1}</td>
-                    <td>${escapeHTML(item.name)}</td>
-                    <td class="points">${item.points}</td>
-                `;
-                body.appendChild(row);
+            showStatus(
+            `Database Error: ${err.message}`,
+            'error'
+            );
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+function parseExcelRows(rows){
+
+    const standings = [];
+
+    const NAME_COLUMN = 14;   // O
+    const TOTAL_COLUMN = 28;  // AC
+
+    for(let i = 3; i < rows.length; i++){
+
+        const row = rows[i];
+
+        const name =
+        String(
+            row[NAME_COLUMN] ?? ''
+        ).trim();
+
+        const points =
+        Number(
+            row[TOTAL_COLUMN]
+        );
+
+        if(
+            name &&
+            !isNaN(points)
+        ){
+            standings.push({
+                name:name,
+                points:points
             });
         }
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('league-table').style.display = 'table';
     }
 
-    function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    return standings;
+}
+
+function showStatus(msg,type){
+
+    const statusDiv =
+    document.getElementById('status');
+
+    statusDiv.innerText = msg;
+
+    statusDiv.className =
+    `status-msg status-${type}`;
+}
+
+async function fetchAndRenderTable(){
+
+    document.getElementById('loading')
+    .style.display = 'block';
+
+    document.getElementById('league-table')
+    .style.display = 'none';
+
+    const { data,error } =
+    await supabaseClient
+    .from('standings')
+    .select('*')
+    .order('points',{
+        ascending:false
+    });
+
+    if(error){
+
+        console.error(error);
+
+        document.getElementById('loading')
+        .innerText =
+        'Error syncing live leaderboard.';
+
+        return;
     }
 
-    // Run query immediately on page view
-    fetchAndRenderTable();
+    const body =
+    document.getElementById('league-body');
+
+    body.innerHTML = '';
+
+    if(!data || data.length === 0){
+
+        body.innerHTML =
+        `<tr>
+            <td colspan="3" style="text-align:center;">
+                No standings found.
+            </td>
+        </tr>`;
+
+    }else{
+
+        data.forEach((item,index)=>{
+
+            const row =
+            document.createElement('tr');
+
+            row.innerHTML = `
+                <td class="rank">${index+1}</td>
+                <td>${escapeHTML(item.name)}</td>
+                <td class="points">${item.points}</td>
+            `;
+
+            body.appendChild(row);
+        });
+    }
+
+    document.getElementById('loading')
+    .style.display = 'none';
+
+    document.getElementById('league-table')
+    .style.display = 'table';
+}
+
+function escapeHTML(str){
+
+    return str.replace(
+        /[&<>'"]/g,
+        tag => ({
+            '&':'&amp;',
+            '<':'&lt;',
+            '>':'&gt;',
+            "'":'&#39;',
+            '"':'&quot;'
+        }[tag] || tag)
+    );
+}
+
+fetchAndRenderTable();
+
 </script>
+
 </body>
 </html>
