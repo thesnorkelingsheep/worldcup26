@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Muirhead ISA Standings</title>
+    <title>The Muirhead ISA Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -75,7 +75,7 @@
 
 <div class="container">
     <header>
-        <h1 id="page-title">🏆 The Muirhead ISA Standings</h1>
+        <h1 id="page-title">🏆 The Muirhead ISA Tracker</h1>
         <button class="btn" id="toggle-view-btn" onclick="toggleView()">Switch to Admin View</button>
     </header>
 
@@ -107,7 +107,7 @@
 <script>
     // ⚙️ CONFIGURATION: Replace these values with your unique Supabase Project Credentials!
 
-    const SUPABASE_URL = 'https://qdwbjrjsldufcvrndois.supabase.co/rest/v1/'; 
+    const SUPABASE_URL = 'https://qdwbjrjsldufcvrndois.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_3snZWMy3jV-Hnm6BtOMmSA_sfGjFqpL';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
