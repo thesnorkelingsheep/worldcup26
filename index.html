@@ -167,29 +167,55 @@
     }
 
     function parseCSV(text) {
-        const lines = text.split(/\r?\n/);
-        const standings = [];
+    const lines = text.split(/\r?\n/);
+    if (lines.length < 2) return [];
 
-        // Data begins on the 3rd row (index 2)
-        for (let i = 2; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const columns = lines[i].split(',');
-            
-            if (columns.length > 28) {
-                const name = columns[14]?.trim();
-                const pointsRaw = columns[28]?.trim();
+    const standings = [];
+    
+    // 1. Break the first line into headers to find exact column positions
+    // This regex splits by commas but safely ignores commas inside quotes
+    const headers = lines[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+    
+    // Default to indices 14 (O) and 28 (AC), but update them if headers are found
+    let nameIndex = 14; 
+    let pointsIndex = 28;
 
-                // Make sure we ignore placeholder texts, NaNs, and headers
-                if (name && name !== 'Name' && name !== 'NaN' && pointsRaw !== undefined) {
-                    const points = parseFloat(pointsRaw);
-                    if (!isNaN(points)) {
-                        standings.push({ name: name, points: points });
-                    }
+    // Scan headers to see if we can automatically map the columns
+    headers.forEach((header, index) => {
+        const cleanHeader = header.replace(/"/g, '').trim().toLowerCase();
+        // Look for common name header variations
+        if (cleanHeader === 'name' || cleanHeader === 'participant') {
+            nameIndex = index;
+        }
+        // Look for common point header variations
+        if (cleanHeader === 'total points' || cleanHeader === 'points' || cleanHeader === 'total') {
+            pointsIndex = index;
+        }
+    });
+
+    // 2. Parse the data rows
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+
+        // Smart split that respects quotes around names/text
+        const columns = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        
+        if (columns.length > Math.max(nameIndex, pointsIndex)) {
+            // Remove quotes and extra spaces from the extracted cells
+            const name = columns[nameIndex]?.replace(/"/g, '').trim();
+            const pointsRaw = columns[pointsIndex]?.replace(/"/g, '').trim();
+
+            // Skip headers, empty slots, or template errors
+            if (name && name !== 'Name' && name !== 'NaN' && pointsRaw !== undefined) {
+                const points = parseFloat(pointsRaw);
+                if (!isNaN(points)) {
+                    standings.push({ name: name, points: points });
                 }
             }
         }
-        return standings;
     }
+    return standings;
+}
 
     function showStatus(msg, type) {
         const statusDiv = document.getElementById('status');
