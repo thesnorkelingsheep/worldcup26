@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live World Cup 2026</title>
+    <title>The Muirhead Fleece Standings</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -75,7 +75,7 @@
 
 <div class="container">
     <header>
-        <h1 id="page-title">🏆 World Cup 2026 Standings</h1>
+        <h1 id="page-title">🏆 The Muirhead Fleece Standings</h1>
         <button class="btn" id="toggle-view-btn" onclick="toggleView()">Switch to Admin View</button>
     </header>
 
@@ -94,7 +94,7 @@
     </div>
 
     <div id="admin-view" class="view-section">
-        <p style="margin-top:0; color:#64748b;">Dropping a new CSV here will instantly wipe old scores and update the leaderboard for everyone worldwide.</p>
+        <p style="margin-top:0; color:#64748b;">Dropping your CSV here will instantly wipe old scores and update the leaderboard for everyone worldwide.</p>
         <div id="drop-zone" ondragover="dragOverHandler(event)" ondragleave="dragLeaveHandler(event)" ondrop="dropHandler(event)" onclick="document.getElementById('file-input').click()">
             <p>Drag & Drop your CSV file here</p>
             <span>or click to browse your computer</span>
@@ -107,9 +107,8 @@
 <script>
     // ⚙️ CONFIGURATION: Replace these values with your unique Supabase Project Credentials!
     const SUPABASE_URL = 'https://qdwbjrjsldufcvrndois.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'sb_publishable_3snZWMy3jV-Hnm6BtOMmSA_sfGjFqpL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your real anon key
 
-    // Fixed naming conflict by changing 'supabase' variable to 'supabaseClient'
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentView = 'leaderboard';
@@ -166,56 +165,54 @@
         reader.readAsText(file);
     }
 
+    // Explicit parser tailored directly to your template file structure
     function parseCSV(text) {
-    const lines = text.split(/\r?\n/);
-    if (lines.length < 2) return [];
+        const lines = text.split(/\r?\n/);
+        // Ensure there are enough lines to pass the first 3 lines (headers + meta)
+        if (lines.length < 4) return [];
 
-    const standings = [];
-    
-    // 1. Break the first line into headers to find exact column positions
-    // This regex splits by commas but safely ignores commas inside quotes
-    const headers = lines[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-    
-    // Default to indices 14 (O) and 28 (AC), but update them if headers are found
-    let nameIndex = 14; 
-    let pointsIndex = 28;
-
-    // Scan headers to see if we can automatically map the columns
-    headers.forEach((header, index) => {
-        const cleanHeader = header.replace(/"/g, '').trim().toLowerCase();
-        // Look for common name header variations
-        if (cleanHeader === 'name' || cleanHeader === 'participant') {
-            nameIndex = index;
-        }
-        // Look for common point header variations
-        if (cleanHeader === 'total points' || cleanHeader === 'points' || cleanHeader === 'total') {
-            pointsIndex = index;
-        }
-    });
-
-    // 2. Parse the data rows
-    for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-
-        // Smart split that respects quotes around names/text
-        const columns = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        const standings = [];
         
-        if (columns.length > Math.max(nameIndex, pointsIndex)) {
-            // Remove quotes and extra spaces from the extracted cells
-            const name = columns[nameIndex]?.replace(/"/g, '').trim();
-            const pointsRaw = columns[pointsIndex]?.replace(/"/g, '').trim();
+        // As specified, line index 0 and 1 are ignored. 
+        // Line index 2 (the 3rd row) is our functional layout header row.
+        const headers = lines[2].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        
+        let nameIndex = 14;   // Fallback position for Column O
+        let pointsIndex = 28; // Fallback position for Column AC
 
-            // Skip headers, empty slots, or template errors
-            if (name && name !== 'Name' && name !== 'NaN' && pointsRaw !== undefined) {
-                const points = parseFloat(pointsRaw);
-                if (!isNaN(points)) {
-                    standings.push({ name: name, points: points });
+        // Pinpoint positions precisely dynamically based on row 3 text content
+        headers.forEach((header, index) => {
+            const cleanHeader = header.replace(/"/g, '').trim().toLowerCase();
+            if (cleanHeader === 'name' || cleanHeader === 'participant') {
+                nameIndex = index;
+            }
+            if (cleanHeader === 'total points' || cleanHeader === 'points' || cleanHeader === 'total') {
+                pointsIndex = index;
+            }
+        });
+
+        // Loop data entries beginning directly on line index 3 (the 4th row)
+        for (let i = 3; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+
+            const columns = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            
+            if (columns.length > Math.max(nameIndex, pointsIndex)) {
+                const name = columns[nameIndex]?.replace(/"/g, '').trim();
+                const pointsRaw = columns[pointsIndex]?.replace(/"/g, '').trim();
+
+                // Validation to pass real participant rows and dodge bottom template strings or summary headers
+                if (name && name !== 'Name' && name !== 'NaN' && name !== '') {
+                    const points = parseFloat(pointsRaw);
+                    // Ensure the points field evaluates cleanly to a number type
+                    if (!isNaN(points)) {
+                        standings.push({ name: name, points: points });
+                    }
                 }
             }
         }
+        return standings;
     }
-    return standings;
-}
 
     function showStatus(msg, type) {
         const statusDiv = document.getElementById('status');
@@ -223,7 +220,7 @@
         statusDiv.className = `status-msg status-${type}`;
     }
 
-    // Fetch the real-time values from Supabase and order them High -> Low
+    // Fetch values from Supabase and order them High -> Low
     async function fetchAndRenderTable() {
         document.getElementById('loading').style.display = 'block';
         document.getElementById('league-table').style.display = 'none';
