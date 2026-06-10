@@ -105,13 +105,12 @@
 </div>
 
 <script>
-    // ⚙️ CONFIGURATION: Put your unique Supabase Details Here!
-
+    // ⚙️ CONFIGURATION: Replace these values with your unique Supabase Project Credentials!
     const SUPABASE_URL = 'https://qdwbjrjsldufcvrndois.supabase.co/rest/v1/'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_3snZWMy3jV-Hnm6BtOMmSA_sfGjFqpL';
 
-    // Initialize Supabase client
-    const supabase =  window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Fixed naming conflict by changing 'supabase' variable to 'supabaseClient'
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentView = 'leaderboard';
 
@@ -152,11 +151,11 @@
                 if(parsedData.length === 0) throw new Error("No valid records found in columns O and AC.");
 
                 // 1. Delete all current table contents securely
-                const { error: deleteError } = await supabase.from('standings').delete().neq('id', 0);
+                const { error: deleteError } = await supabaseClient.from('standings').delete().neq('id', 0);
                 if(deleteError) throw deleteError;
 
                 // 2. Upload the new records
-                const { error: insertError } = await supabase.from('standings').insert(parsedData);
+                const { error: insertError } = await supabaseClient.from('standings').insert(parsedData);
                 if(insertError) throw insertError;
 
                 showStatus(`Success! Online Leaderboard updated for everyone with ${parsedData.length} entries.`, 'success');
@@ -171,6 +170,7 @@
         const lines = text.split(/\r?\n/);
         const standings = [];
 
+        // Data begins on the 3rd row (index 2)
         for (let i = 2; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
             const columns = lines[i].split(',');
@@ -179,6 +179,7 @@
                 const name = columns[14]?.trim();
                 const pointsRaw = columns[28]?.trim();
 
+                // Make sure we ignore placeholder texts, NaNs, and headers
                 if (name && name !== 'Name' && name !== 'NaN' && pointsRaw !== undefined) {
                     const points = parseFloat(pointsRaw);
                     if (!isNaN(points)) {
@@ -201,7 +202,7 @@
         document.getElementById('loading').style.display = 'block';
         document.getElementById('league-table').style.display = 'none';
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('standings')
             .select('*')
             .order('points', { ascending: false });
